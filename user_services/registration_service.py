@@ -21,12 +21,12 @@ reg_states_router = Router()
 
 async def reg_add_request_handler(dp:Dispatcher, bot: Bot):
     @dp.callback_query(lambda call: call.data == "add_reg_request")
-    @reg_states_router(RegistrationStates.name)
-    async def handle_registration_start(call: CallbackQuery):
-        user_data[chat_id] = {}
+    @reg_states_router.message(RegistrationStates.username)
+    async def handle_registration_start(call: CallbackQuery,state:FSMContext):
         chat_id = call.message.chat.id
+        user_data[chat_id] = {}
         await call.message.answer("Введите ваше имя пользователя:")
-        await RegistrationStates.username.set()
+        await state.set_state(RegistrationStates.email)
 
     # Сохранение имени пользователя
     @reg_states_router.message(RegistrationStates.username)
@@ -50,7 +50,7 @@ async def reg_add_request_handler(dp:Dispatcher, bot: Bot):
 
     # Сохранение пароля и завершение регистрации
     @reg_states_router.message(RegistrationStates.password)
-    async def get_password(message: Message, state: FSMContext):
+    async def get_password(message: Message):
         chat_id = message.chat.id
         password = message.text
 
@@ -60,12 +60,14 @@ async def reg_add_request_handler(dp:Dispatcher, bot: Bot):
         
         builder = InlineKeyboardBuilder()
 
-        button1 = InlineKeyboardButton("Готово",callback_data="send_model_to_server")
-        button2 = InlineKeyboardButton("Начать заново",callback_data="add_reg_request")
+        button1 = InlineKeyboardButton(text = "Готово",callback_data="send_reg_request_to_server")
+        button2 = InlineKeyboardButton(text = "Начать заново",callback_data="add_reg_request")
 
         builder.add(button1,button2)
 
         await bot.send_message(
+            chat_id=chat_id,
+            text=
             f"Ваши данные:\n"
             f"Имя пользователя: {user_data[chat_id]['username']}\n"
             f"Email: {user_data[chat_id]['email']}\n"
@@ -82,7 +84,7 @@ async def reg_add_request_handler(dp:Dispatcher, bot: Bot):
             "email": user_data[chat_id]['email'],
             "password": user_data[chat_id]['password']
         }
-        response: Optional[ClientResponse] = NetWorkWorker().send_model('user/add_reg_request',reg_request)
+        response: Optional[ClientResponse] = await NetWorkWorker().send_model(endpoint="user/add_reg_request",model_data=reg_request)
         if response:
             response_data = await response.json()
             if response_data.get('status') == 'success':

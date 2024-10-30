@@ -7,15 +7,15 @@ class NetWorkWorker:
 
 
     # Функция для отправки модели на сервер
-    async def send_model(endpoint: str, model_data: dict):
+    async def send_model(self,endpoint:str, model_data: dict):
         """
         Отправляет модель на сервер по заданному endpoint.
         """
         async with aiohttp.ClientSession() as session:
             try:
                 async with session.post(f"{API_URL}{endpoint}", json=model_data) as response:
-                    if response.status == 201:
-                        return await response.json()  # возвращаем данные из ответа, если запрос успешен
+                    if response.status == 201 or response.status == 401:
+                        return response
                     else:
                         print(f"Ошибка при отправке модели: {response.status} - {response.reason}")
                         return None
@@ -24,7 +24,7 @@ class NetWorkWorker:
                 return None
 
     # Функция для получения списка моделей
-    async def get_model_list(endpoint: str, params: dict = None):
+    async def get_model_list(self,endpoint: str, params: dict = None):
         """
         Получает список моделей с сервера по заданному endpoint.
         """
@@ -32,7 +32,7 @@ class NetWorkWorker:
             try:
                 async with session.get(f"{API_URL}{endpoint}", params=params) as response:
                     if response.status == 200:
-                        return await response.json()  # возвращаем список моделей
+                        return await response.json()
                     else:
                         print(f"Ошибка при получении списка моделей: {response.status} - {response.reason}")
                         return None
@@ -40,8 +40,7 @@ class NetWorkWorker:
                 print(f"Ошибка сети при получении списка моделей: {e}")
                 return None
 
-    # Функция для получения одной модели по ID
-    async def get_model_by_params(endpoint: str, params: dict):
+    async def get_model_by_params(self,endpoint: str, params: dict):
         """
         Получает одну модель с сервера по заданному endpoint и id модели.
         """

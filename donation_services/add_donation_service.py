@@ -1,99 +1,106 @@
-from aiogram import Bot, Dispatcher, types
-from aiogram.utils import executor
-from models import DonationCreate
-import aiohttp
-import asyncio
+from http.client import responses
+
+from aiogram import Bot, Dispatcher, types, Router
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State, StatesGroup
+from aiogram.types import InlineKeyboardButton
+
 from api.network_worker import NetWorkWorker
+from models.donation import DonationCreate
+from aiogram.utils.keyboard import InlineKeyboardBuilder
+
+
+class DonationStates(StatesGroup):
+    owner = State()
+    group = State()
+    kell = State()
+    tromb = State()
+    plazma = State()
+    rezus = State()
+    org = State()
+
 
 donation_data = {}
+add_donation_states = Router()
 
-async def donation_handler(dp:Dispatcher,bot:Bot):
-    @dp.message_handler(func=lambda call: call.data == "add_donation")
-    async def handle_donation_start(message: types.Message):
+
+async def add_donation_handler(dp: Dispatcher, bot: Bot):
+    @dp.callback_query(func=lambda call: call.data == "add_donation")
+    async def handle_donation_start(message: types.Message,state: FSMContext):
         chat_id = message.chat.id
         await bot.send_message(chat_id, "Введите имя владельца донации:")
 
-        # Сохраняем состояние пользователя (ожидание ввода имени владельца)
-        donation_data[chat_id] = {'step': 'owner'}
 
-    @dp.message_handler(lambda message: message.chat.id in donation_data and donation_data[message.chat.id]['step'] == 'owner')
-    async def get_owner(message: types.Message):
+        # Сохраняем состояние пользователя (ожидание ввода имени владельца)
+        donation_data[chat_id] = {}
+        await state.set_state(DonationStates.group)
+
+    @add_donation_states.message(DonationStates.group)
+    async def get_owner(message: types.Message,state: FSMContext):
         chat_id = message.chat.id
         owner = message.text
+        params = {
+            "name":owner
+        }
+        result = await NetWorkWorker().get_model_by_params("admin/get_user_by_name",params)
+        if result:
+            donation_data[chat_id]['owner'] = owner
 
-        donation_data[chat_id]['owner'] = owner
-        donation_data[chat_id]['step'] = 'group'
+            await bot.send_message(chat_id, "Введите группу донации:")
+            await state.set_state(DonationStates.kell)
 
-        await bot.send_message(chat_id, "Введите группу донации:")
+        else:
+            await bot.send_message(chat_id,"Пользователя с таким ФИО не существует, попробуйте еще раз")
 
-    @dp.message_handler(lambda message: message.chat.id in donation_data and donation_data[message.chat.id]['step'] == 'group')
-    async def get_group(message: types.Message):
+
+    @add_donation_states.message(DonationStates.kell)
+    async def get_group(message: types.Message,state: FSMContext):
         chat_id = message.chat.id
         group = message.text
 
         donation_data[chat_id]['group'] = group
-        donation_data[chat_id]['step'] = 'kell'
 
         await bot.send_message(chat_id, "Введите значение для kell:")
+        await state.set_state(DonationStates.tromb)
 
-    @dp.message_handler(lambda message: message.chat.id in donation_data and donation_data[message.chat.id]['step'] == 'kell')
-    async def get_kell(message: types.Message):
+    @add_donation_states.message(DonationStates.tromb)
+    async def get_kell(message: types.Message,state: FSMContext):
         chat_id = message.chat.id
         kell = message.text
 
         donation_data[chat_id]['kell'] = kell
-        donation_data[chat_id]['step'] = 'tromb'
 
         await bot.send_message(chat_id, "Введите значение для tromb:")
+        await state.set_state(DonationStates.plazma)
 
-    @dp.message_handler(lambda message: message.chat.id in donation_data and donation_data[message.chat.id]['step'] == 'tromb')
-    async def get_tromb(message: types.Message):
+    @add_donation_states.message(DonationStates.plazma)
+    async def get_tromb(message: types.Message,state: FSMContext):
         chat_id = message.chat.id
         tromb = message.text
 
         donation_data[chat_id]['tromb'] = tromb
-        donation_data[chat_id]['step'] = 'plazma'
 
         await bot.send_message(chat_id, "Введите значение для plazma:")
+        await state.set_state(DonationStates.rezus)
 
-    @dp.message_handler(lambda message: message.chat.id in donation_data and donation_data[message.chat.id]['step'] == 'plazma')
-    async def get_plazma(message: types.Message):
+    @add_donation_states.message(DonationStates.rezus)
+    async def get_plazma(message: types.Message,state: FSMContext):
         chat_id = message.chat.id
         plazma = message.text
 
         donation_data[chat_id]['plazma'] = plazma
-        donation_data[chat_id]['step'] = 'rezus'
 
         await bot.send_message(chat_id, "Введите значение для rezus:")
+        await state.set_state(DonationStates.org)
 
-    @dp.message_handler(lambda message: message.chat.id in donation_data and donation_data[message.chat.id]['step'] == 'rezus')
-    async def get_rezus(message: types.Message):
-        chat_id = message.chat.id
-        rezus = message.text
 
-        donation_data[chat_id]['rezus'] = rezus
-        donation_data[chat_id]['step'] = 'date'
-
-        await bot.send_message(chat_id, "Введите дату донации (в формате YYYY-MM-DD):")
-
-    @dp.message_handler(lambda message: message.chat.id in donation_data and donation_data[message.chat.id]['step'] == 'date')
-    async def get_date(message: types.Message):
-        chat_id = message.chat.id
-        date = message.text
-
-        donation_data[chat_id]['date'] = date
-        donation_data[chat_id]['step'] = 'org'
-
-        await bot.send_message(chat_id, "Введите организацию донации:")
-
-    @dp.message_handler(lambda message: message.chat.id in donation_data and donation_data[message.chat.id]['step'] == 'org')
+    @add_donation_states.message(DonationStates.org)
     async def get_org(message: types.Message):
         chat_id = message.chat.id
         org = message.text
 
         donation_data[chat_id]['org'] = org
 
-        # Создаем объект донации и отправляем его в базу данных
         donation = DonationCreate(
             owner=donation_data[chat_id]['owner'],
             group=donation_data[chat_id]['group'],
@@ -104,12 +111,13 @@ async def donation_handler(dp:Dispatcher,bot:Bot):
             date=donation_data[chat_id]['date'],
             org=donation_data[chat_id]['org']
         )
-         # Создание кнопки "Отправить"
-        inline_keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True,)
-        send_button = types.ReplyKeyboardButton("Отправить")
-        send_button = types.ReplyKeyboardButton("Начать заново")
 
-        inline_keyboard.add(send_button)
+        builder = InlineKeyboardBuilder()
+
+        button1 = InlineKeyboardButton(text="Готово", callback_data="send_donation_to_server")
+        button2 = InlineKeyboardButton(text="Начать заново", callback_data="add_donation")
+
+        builder.add(button1, button2)
 
         # добавить код для сохранения данных в базе данных
         await bot.send_message(chat_id, (
@@ -117,8 +125,9 @@ async def donation_handler(dp:Dispatcher,bot:Bot):
             f"Группа: {donation.group}\nKell: {donation.kell}\nTromb: {donation.tromb}\n"
             f"Plazma: {donation.plazma}\nRezus: {donation.rezus}\nДата: {donation.date}\nОрганизация: {donation.org}"
         ))
-    @dp.message_handler(lambda message: message.text == "Отправить" and message.chat.id in donation_data)
-    async def send_model(message: types.Message):
+
+    @dp.callback_query(lambda call: call.data == "send_donation_to_server")
+    async def send_model(message: types.Message,state: FSMContext):
         chat_id = message.chat.id
 
         # Подготовка данных для отправки
@@ -133,21 +142,17 @@ async def donation_handler(dp:Dispatcher,bot:Bot):
             "org": donation_data[chat_id]['org'],
         }
 
-        result = await NetWorkWorker().send_model("donation", model_data)
-        if result:
-            await bot.send_message(chat_id, "Данные о донации успешно отправлены!")
+        response = await NetWorkWorker().send_model("donation", model_data)
+        if response:
+            response_data = await response.json()
+            if response_data.get('status') == 'success':
+                await bot.send_message(chat_id,
+                                       "Данные по донации отправлены")
+
         else:
-            await bot.send_message(chat_id, "Ошибка при отправке данных о донации.")
-
-        # Удаляем данные после завершения
-        del donation_data[chat_id]
-
-    @dp.message_handler(lambda message: message.text == "Начать заново" and message.chat.id in donation_data)
-    async def cancel_send_donation(message: types.Message):
-        chat_id = message.chat.id
+            await bot.send_message(chat_id, "Похоже что то пошло не так, попробуйте позже")
 
         del donation_data[chat_id]
+        await state.clear()
 
-        bot.send_message(chat_id,"/new_donation")
 
-        
