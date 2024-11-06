@@ -14,7 +14,7 @@ class NetWorkWorker:
         async with aiohttp.ClientSession() as session:
             try:
                 async with session.post(f"{API_URL}{endpoint}", json=model_data) as response:
-                    if response.status == 201 or response.status == 401:
+                    if response.status == 200 or response.status == 401:
                         return response
                     else:
                         print(f"Ошибка при отправке модели: {response.status} - {response.reason}")
@@ -32,9 +32,12 @@ class NetWorkWorker:
             try:
                 async with session.get(f"{API_URL}{endpoint}", params=params) as response:
                     if response.status == 200:
+                        print(await response.json())
                         return await response.json()
+
                     else:
                         print(f"Ошибка при получении списка моделей: {response.status} - {response.reason}")
+                        print(await response.json())
                         return None
             except aiohttp.ClientError as e:
                 print(f"Ошибка сети при получении списка моделей: {e}")
