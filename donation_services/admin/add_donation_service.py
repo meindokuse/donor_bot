@@ -40,7 +40,7 @@ async def add_donation(call: CallbackQuery, state: FSMContext, bot: Bot):
 async def get_name(message: types.Message, state: FSMContext, bot: Bot):
     chat_id = message.chat.id
     donation_data[chat_id]["type"] = message.text
-    await bot.send_message(chat_id, "Введите имя владельца донации:", reply_markup=ReplyKeyboardRemove())
+    await bot.send_message(chat_id, "Введите ФИО владельца донации:", reply_markup=ReplyKeyboardRemove())
 
     await state.set_state(DonationStates.owner)
 
@@ -116,7 +116,7 @@ async def send_model(call: CallbackQuery, bot: Bot):
     response = await NetWorkWorker().send_model("donation/admin/add_donation", model_data)
     if response:
         button1 = InlineKeyboardButton(text="В начало", callback_data="main")
-        button2 = InlineKeyboardButton(text="Отправить еще", callback_data="reg_user")
+        button2 = InlineKeyboardButton(text="Отправить еще", callback_data="add_donation")
         builder.add(button1, button2)
         await bot.send_message(chat_id,
                                "Данные по донации отправлены", reply_markup=builder.as_markup())

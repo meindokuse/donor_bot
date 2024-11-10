@@ -49,6 +49,7 @@ async def format_donation_info(donation_info):
     formatted_info = ""
     for t, info in donation_info.items():
         last_donation = info["last_donation"]
+        status = '✅' if info['status'] == 1 else '❌'
         text = (
             f"{t}:\n"
             f"  Количество донаций: {info['quantity_donation']}\n"
@@ -56,7 +57,7 @@ async def format_donation_info(donation_info):
             f"    - Дата: {last_donation.get('date')}\n"
             f"    - Организация: {last_donation.get('org')}\n"
             f"    - Безвозмездная: {'Да' if last_donation.get('is_free') else 'Нет'}\n"
-            f"  Статус: {info['status']}\n\n"
+            f"  Статус: {status}\n\n"
         )
         formatted_info += f"<blockquote>{text}</blockquote>"
 

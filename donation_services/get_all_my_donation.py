@@ -14,14 +14,13 @@ get_all_my_donation = Router()
 @get_all_my_donation.callback_query(F.data == 'get_all_my_donation')
 async def get_donations_by_date(call: CallbackQuery):
     chat_id = call.message.chat.id
-    tg_id = call.message.from_user.id
 
     pager[chat_id] = {'page': 1, 'limit': 4}
 
     params = {
         "page": pager[chat_id]['page'],
         "limit": pager[chat_id]['limit'],
-        "telegram_id": tg_id,
+        "telegram_id": str(chat_id),
     }
 
     result = await NetWorkWorker().get_model_list(endpoint="donation/get_user_donations", params=params)
@@ -42,14 +41,18 @@ async def get_donations_by_date(call: CallbackQuery):
             text="В начало",
             callback_data="to_start_1"
         )
-        if len(data['donations']) < 4:
+        if len(data['donations']) < 4 and pager[chat_id]['page'] == 1:
+            builder.add()
+        elif len(data['donations']) < 4:
             builder.add(prev_p, to_start)
+        elif pager[chat_id]['page'] == 1:
+            builder.add(to_start, next_p)
         else:
             builder.add(prev_p, to_start, next_p)
 
         don_message = await generate_message(data)
 
-        await call.answer(text=don_message, reply_markup=builder.as_markup(), parse_mode=ParseMode.HTML)
+        await call.message.answer(text=don_message, reply_markup=builder.as_markup(), parse_mode=ParseMode.HTML)
     else:
         await call.answer(text="Похоже произошла ошибка!")
 
@@ -85,7 +88,7 @@ async def send_paginated_donations(message, state, chat_id):
     params = {
         "page": pager[chat_id]['page'],
         "limit": pager[chat_id]['limit'],
-
+        'telegram_id': str(chat_id),
     }
 
     result = await NetWorkWorker().get_model_list(endpoint="donation/get_user_donations", params=params)
@@ -106,8 +109,12 @@ async def send_paginated_donations(message, state, chat_id):
             text="В начало",
             callback_data="to_start_1"
         )
-        if len(data['donations']) < 4:
+        if len(data['donations']) < 4 and pager[chat_id]['page'] == 1:
+            builder.add()
+        elif len(data['donations']) < 4:
             builder.add(prev_p, to_start)
+        elif pager[chat_id]['page'] == 1:
+            builder.add(next_p, to_start)
         else:
             builder.add(prev_p, to_start, next_p)
 
@@ -126,7 +133,7 @@ async def generate_message(data: dict):
         return full_message
     donations_text = ''
     for donation in donations:
-        is_free = 'Безвозмездная' if donation.get('is_free') else 'НЕбезвозмездная'
+        is_free = 'Да' if donation.get('is_free') else 'Нет'
         donation_info = (
             f"ID: {donation.get('id')}\n"
             f"Тип: {donation.get('type')}\n"

@@ -12,6 +12,7 @@ from user_services.admin.registration_service import reg_user_router
 from donation_services.admin.add_donation_service import add_donation_router
 from donation_services.admin.get_info_users_donations import get_info_donation_user_router
 from donation_services.admin.get_donations_by_date import get_all_donations
+from donation_services.get_all_my_donation import get_all_my_donation
 
 API_TOKEN = '7530930015:AAFJqvJUpaFUK93qZ73z-k01Y0KBtVIejyQ'
 
@@ -23,6 +24,7 @@ dp.include_router(add_donation_router)
 dp.include_router(get_info_donation_user_router)
 dp.include_router(login_router)
 dp.include_router(get_all_donations)
+dp.include_router(get_all_my_donation)
 
 
 @dp.message(CommandStart())
@@ -31,8 +33,9 @@ async def main(message: types.Message):
     user_id = message.from_user.id
     name = message.from_user.first_name
     data = {
-        "telegram_id": user_id,
+        "telegram_id": str(user_id),
     }
+    print(data)
 
     try:
         response = await NetWorkWorker().get_model_by_params('user/login', data)
@@ -63,16 +66,16 @@ async def main(message: types.Message):
 
             else:
                 # Кнопки для обычного пользователя
-                button_info = InlineKeyboardButton(text="ℹ️ Информация о пользователе", callback_data="about_me")
+                button_info = InlineKeyboardButton(text="ℹ️ Информация о пользователе", callback_data="login")
                 button_donations = InlineKeyboardButton(text="🩸Мой список донаций",
                                                         callback_data="get_all_my_donation")
                 button_achievement = InlineKeyboardButton(text="🏆 Мои достижения", callback_data="get_achievments")
 
                 builder.add(button_info, button_donations, button_achievement)
+                builder.adjust(1)
                 await message.reply(f"Добро пожаловать, {name}!", reply_markup=builder.as_markup())
 
         else:
-
             await message.reply(
                 "Похоже,что вы еще не зарегистрированы!",
             )
@@ -80,6 +83,7 @@ async def main(message: types.Message):
     except Exception as e:
         print(e)
         await message.reply("Ой, произошла ошибка!")
+
 
 # @dp.callback_query(F.data == 'main_after_back')
 # async def main_back(call: types.CallbackQuery):

@@ -90,7 +90,7 @@ async def send_model_to_server(call: CallbackQuery, bot: Bot):
     try:
         reg_request = {
             "name": user_data[chat_id]['name'],
-            "telegram_id": int(user_data[chat_id]['telegram_id']),
+            "telegram_id": user_data[chat_id]['telegram_id'],
             "group": int(user_data[chat_id]['group']),
             "rezus": rezus,
             "kell": int(user_data[chat_id]['kell'])

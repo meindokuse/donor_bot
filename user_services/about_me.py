@@ -11,10 +11,11 @@ async def router_about_me_handler(call: CallbackQuery):
     tg_id = call.message.from_user.id
 
     params = {
-        'telegram_id': tg_id,
+        'telegram_id': str(tg_id),
     }
 
     user = await NetWorkWorker().get_model_by_params('/login', params)
+    print(user)
     if user:
         await call.answer(text=
                           f'ID:{user['id']}\n'

@@ -1,22 +1,24 @@
-from typing import Optional
-from aiogram import Bot, Dispatcher, types, Router,F
+from aiogram import Bot, Dispatcher, types, Router, F
+from aiogram.enums import ParseMode
 
 from api.network_worker import NetWorkWorker
-from models.user import UserRead
 
 login_router = Router()
 
 
-@login_router.message(F.data == 'login')
-async def login_user(message: types.Message, bot: Bot):
-    chat_id = message.chat.id
+@login_router.callback_query(F.data == 'login')
+async def login_user(call: types.CallbackQuery, bot: Bot):
+    chat_id = call.message.chat.id
+    tg_id = call.message.from_user.id
     params = {
-        "telegram_id": message.from_user.id
+        "telegram_id": str(chat_id)
     }
     try:
+
         json = await NetWorkWorker().get_model_by_params("user/login", params)
+        print(json, params, call.message.from_user.id, chat_id)
         if json:
-            user: dict = await json.get("user")
+            user: dict = json.get("user")
             role = "Админ" if user.get("role_id") == 1 else "Донор"
 
             user_info = (
@@ -28,7 +30,9 @@ async def login_user(message: types.Message, bot: Bot):
                 f"Роль: {role}"
             )
 
-            await bot.send_message(chat_id, user_info)
+            formated = f'<blockquote>{user_info}</blockquote>'
+
+            await bot.send_message(chat_id, formated, parse_mode=ParseMode.HTML)
     except Exception as e:
         print(e)
-        await bot.send_message(message.chat.id, "Произошла ошибка")
+        await bot.send_message(call.message.chat.id, "Произошла ошибка")

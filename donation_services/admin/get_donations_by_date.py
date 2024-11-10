@@ -24,7 +24,7 @@ async def get_donations_by_date(query: CallbackQuery, state: FSMContext):
     message = query.message
     pager[message.chat.id] = {'page': 1, 'limit': 4}
 
-    await message.answer("Введите дату в формате\n YYYY.MM.DD-YYYY.MM.DD\n(Т.е начало - конец)")
+    await message.answer("Введите дату в формате\n YYYY-MM-DD-YYYY-MM-DD\n(Т.е начало - конец)")
     await state.set_state(GetDonationDate.get_date)
 
 
@@ -65,8 +65,12 @@ async def get_donations_by_date(message: types.Message, state: FSMContext):
             text="В начало",
             callback_data="to_start"
         )
-        if len(data['donations']) < 4:
+        if len(data['donations']) < 4 and pager[chat_id]['page'] == 1:
+            builder.add()
+        elif len(data['donations']) < 4:
             builder.add(prev_p, to_start)
+        elif pager[chat_id]['page'] == 1:
+            builder.add(to_start, next_p)
         else:
             builder.add(prev_p, to_start, next_p)
 
@@ -133,8 +137,12 @@ async def send_paginated_donations(message, state, chat_id):
             text="В начало",
             callback_data="to_start"
         )
-        if len(data['donations']) < 4:
+        if len(data['donations']) < 4 and pager[chat_id]['page'] == 1:
+            builder.add()
+        elif len(data['donations']) < 4:
             builder.add(prev_p, to_start)
+        elif pager[chat_id]['page'] == 1:
+            builder.add(next_p, to_start)
         else:
             builder.add(prev_p, to_start, next_p)
 
