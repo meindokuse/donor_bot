@@ -2,14 +2,19 @@ from aiogram import Bot, Dispatcher, types, Router, F
 from aiogram.enums import ParseMode
 
 from api.network_worker import NetWorkWorker
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 login_router = Router()
 
 
 @login_router.callback_query(F.data == 'login')
 async def login_user(call: types.CallbackQuery, bot: Bot):
+    await call.message.delete()
     chat_id = call.message.chat.id
-    tg_id = call.message.from_user.id
+
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="В меню", callback_data="main")],
+    ])
     params = {
         "telegram_id": str(chat_id)
     }
@@ -32,7 +37,7 @@ async def login_user(call: types.CallbackQuery, bot: Bot):
 
             formated = f'<blockquote>{user_info}</blockquote>'
 
-            await bot.send_message(chat_id, formated, parse_mode=ParseMode.HTML)
+            await bot.send_message(chat_id, formated, parse_mode=ParseMode.HTML,reply_markup=keyboard)
     except Exception as e:
         print(e)
-        await bot.send_message(call.message.chat.id, "Произошла ошибка")
+        await bot.send_message(call.message.chat.id, "Произошла ошибка", reply_markup=keyboard)

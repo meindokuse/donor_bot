@@ -1,5 +1,5 @@
 from donation_services.admin.add_donation_service import donation_data
-from user_services.admin.registration_service import user_data
+from user_services.admin.registration_service import user_data,last_mes_reg
 from donation_services.admin.get_donations_by_date import pager
 
 from aiogram import BaseMiddleware
@@ -11,6 +11,7 @@ pager_1 = {}
 
 
 class CleanUpMiddleware(BaseMiddleware):
+
     async def on_post_process_update(self, update: Update, result, data: dict):
         # Получаем состояние пользователя
         state: FSMContext = data.get('state')
@@ -31,10 +32,15 @@ class CleanUpMiddleware(BaseMiddleware):
             del pager[chat_id]
 
 
-list_dicts = [user_data, donation_data, pager]
+list_dicts = [user_data, donation_data, pager, last_mes_reg]
 list_states = []
 
 
 async def clear_all(chat_id):
     for d in list_dicts:
-        del d[chat_id]
+        if chat_id in d:
+            print(d[chat_id])
+            del d[chat_id]
+        else:
+            print('Пусто')
+

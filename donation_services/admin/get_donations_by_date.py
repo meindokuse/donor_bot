@@ -1,4 +1,4 @@
-from aiogram import types, Router, F
+from aiogram import types, Router, F, Bot
 from aiogram.enums import ParseMode
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import CallbackQuery, InlineKeyboardButton
@@ -20,21 +20,27 @@ pager = {}
 
 @get_all_donations.callback_query(F.data == 'get_donation_list')
 async def get_donations_by_date(query: CallbackQuery, state: FSMContext):
+    await query.message.delete()
     await state.clear()
     message = query.message
     pager[message.chat.id] = {'page': 1, 'limit': 4}
 
-    await message.answer("Введите дату в формате\n YYYY-MM-DD-YYYY-MM-DD\n(Т.е начало - конец)")
+    last_mes = await message.answer("Введите дату в формате\n YYYY-MM-DD-YYYY-MM-DD\n(Т.е начало - конец)")
     await state.set_state(GetDonationDate.get_date)
+    await state.update_data(last_mes_id=last_mes.message_id)
 
 
 @get_all_donations.message(GetDonationDate.get_date)
-async def get_donations_by_date(message: types.Message, state: FSMContext):
-    if await state.get_data():
-        dates = await state.get_data()
+async def get_donations_by_date(message: types.Message, state: FSMContext, bot: Bot):
+    state_data = await state.get_data()
+    if state_data.get('get_date') is not None:
+        dates = state_data['get_date']
     else:
         dates = message.text.split()
         await state.update_data(get_date=dates)
+
+    await message.delete()
+    await bot.delete_message(chat_id=message.chat.id, message_id=state_data['last_mes_id'])
 
     date_start = dates[0]
     date_end = dates[1]
@@ -87,7 +93,7 @@ async def prev_p(query: CallbackQuery, state: FSMContext):
     pager[chat_id]['page'] -= 1
 
     await query.message.delete()
-    await send_paginated_donations(query.message, state, chat_id)
+    await send_paginated_donations(query, state, chat_id)
 
 
 @get_all_donations.callback_query(F.data == 'next_don_list')
@@ -96,7 +102,7 @@ async def next_p(query: CallbackQuery, state: FSMContext):
     pager[chat_id]['page'] += 1
 
     await query.message.delete()
-    await send_paginated_donations(query.message, state, chat_id)
+    await send_paginated_donations(query, state, chat_id)
 
 
 @get_all_donations.callback_query(F.data == 'to_start')
@@ -105,10 +111,10 @@ async def next_p(query: CallbackQuery, state: FSMContext):
     pager[chat_id]['page'] = 1
 
     await query.message.delete()
-    await send_paginated_donations(query.message, state, chat_id)
+    await send_paginated_donations(query, state, chat_id)
 
 
-async def send_paginated_donations(message, state, chat_id):
+async def send_paginated_donations(call: CallbackQuery, state, chat_id):
     dates = await state.get_data()
     date_start, date_end = dates['get_date']
 
@@ -137,19 +143,34 @@ async def send_paginated_donations(message, state, chat_id):
             text="В начало",
             callback_data="to_start"
         )
+        to_main = InlineKeyboardButton(
+            text="В меню",
+            callback_data="main"
+        )
         if len(data['donations']) < 4 and pager[chat_id]['page'] == 1:
-            builder.add()
+            builder.add(to_main)
         elif len(data['donations']) < 4:
-            builder.add(prev_p, to_start)
+            builder.add(prev_p, to_start, to_main)
+            builder.adjust(2)
         elif pager[chat_id]['page'] == 1:
-            builder.add(next_p, to_start)
+            builder.add(to_start, next_p, to_main)
+            builder.adjust(2)
         else:
-            builder.add(prev_p, to_start, next_p)
+            builder.add(prev_p, to_start, next_p, to_main)
+            builder.adjust(3)
 
         don_message = await generate_message(data)
-        await message.answer(don_message, reply_markup=builder.as_markup(), parse_mode=ParseMode.HTML)
+        print(don_message)
+        await call.message.answer(don_message, reply_markup=builder.as_markup(), parse_mode=ParseMode.HTML)
     else:
-        await message.answer("Похоже произошла ошибка!")
+        builder = InlineKeyboardBuilder()
+
+        to_main = InlineKeyboardButton(
+            text="В меню",
+            callback_data="main"
+        )
+        builder.add(to_main)
+        await call.message.answer("Похоже произошла ошибка!", reply_markup=builder.as_markup())
 
 
 async def generate_message(data: dict):

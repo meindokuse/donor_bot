@@ -6,20 +6,53 @@ from aiogram.fsm.context import FSMContext
 
 from api.network_worker import NetWorkWorker
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-pager = {}
+pager_user = {}
 get_all_my_donation = Router()
 
 
 @get_all_my_donation.callback_query(F.data == 'get_all_my_donation')
-async def get_donations_by_date(call: CallbackQuery):
+async def get_all_my_donation_fun(call: CallbackQuery):
+    await call.message.delete()
     chat_id = call.message.chat.id
 
-    pager[chat_id] = {'page': 1, 'limit': 4}
+    pager_user[chat_id] = {'page': 1, 'limit': 4}
 
+    await send_paginated_donations(call, chat_id)
+
+
+@get_all_my_donation.callback_query(F.data == 'prev_don_list_1')
+async def prev_p(query: CallbackQuery):
+    chat_id = query.message.chat.id
+    pager_user[chat_id]['page'] -= 1
+
+    await query.message.delete()
+    await send_paginated_donations(query, chat_id)
+
+
+@get_all_my_donation.callback_query(F.data == 'next_don_list_1')
+async def next_p(query: CallbackQuery):
+    chat_id = query.message.chat.id
+    pager_user[chat_id]['page'] += 1
+
+    await query.message.delete()
+    await send_paginated_donations(query, chat_id)
+
+
+@get_all_my_donation.callback_query(F.data == 'to_start_1')
+async def next_p(query: CallbackQuery):
+    chat_id = query.message.chat.id
+    pager_user[chat_id]['page'] = 1
+
+    await query.message.delete()
+    await send_paginated_donations(query, chat_id)
+
+
+async def send_paginated_donations(call: CallbackQuery, chat_id):
     params = {
-        "page": pager[chat_id]['page'],
-        "limit": pager[chat_id]['limit'],
+        "page": pager_user[chat_id]['page'],
+        "limit": pager_user[chat_id]['limit'],
         "telegram_id": str(chat_id),
     }
 
@@ -41,87 +74,28 @@ async def get_donations_by_date(call: CallbackQuery):
             text="В начало",
             callback_data="to_start_1"
         )
-        if len(data['donations']) < 4 and pager[chat_id]['page'] == 1:
-            builder.add()
+        to_menu = InlineKeyboardButton(text="В меню", callback_data="main")
+        if len(data['donations']) < 4 and pager_user[chat_id]['page'] == 1:
+            builder.add(to_menu)
         elif len(data['donations']) < 4:
-            builder.add(prev_p, to_start)
-        elif pager[chat_id]['page'] == 1:
-            builder.add(to_start, next_p)
+            builder.add(prev_p, to_start, to_menu)
+            builder.adjust(2)
+        elif pager_user[chat_id]['page'] == 1:
+            builder.add(to_start, next_p, to_menu)
+            builder.adjust(2)
         else:
-            builder.add(prev_p, to_start, next_p)
+            builder.add(to_start, prev_p, next_p, to_menu)
+            builder.adjust(3)
 
         don_message = await generate_message(data)
+
 
         await call.message.answer(text=don_message, reply_markup=builder.as_markup(), parse_mode=ParseMode.HTML)
     else:
-        await call.answer(text="Похоже произошла ошибка!")
-
-
-@get_all_my_donation.callback_query(F.data == 'prev_don_list_1')
-async def prev_p(query: CallbackQuery, state: FSMContext):
-    chat_id = query.message.chat.id
-    pager[chat_id]['page'] -= 1
-
-    await query.message.delete()
-    await send_paginated_donations(query.message, state, chat_id)
-
-
-@get_all_my_donation.callback_query(F.data == 'next_don_list_1')
-async def next_p(query: CallbackQuery, state: FSMContext):
-    chat_id = query.message.chat.id
-    pager[chat_id]['page'] += 1
-
-    await query.message.delete()
-    await send_paginated_donations(query.message, state, chat_id)
-
-
-@get_all_my_donation.callback_query(F.data == 'to_start_1')
-async def next_p(query: CallbackQuery, state: FSMContext):
-    chat_id = query.message.chat.id
-    pager[chat_id]['page'] = 1
-
-    await query.message.delete()
-    await send_paginated_donations(query.message, state, chat_id)
-
-
-async def send_paginated_donations(message, state, chat_id):
-    params = {
-        "page": pager[chat_id]['page'],
-        "limit": pager[chat_id]['limit'],
-        'telegram_id': str(chat_id),
-    }
-
-    result = await NetWorkWorker().get_model_list(endpoint="donation/get_user_donations", params=params)
-
-    if result:
-        data = result.get('data')
-
-        builder = InlineKeyboardBuilder()
-        prev_p = InlineKeyboardButton(
-            text="⬅️",
-            callback_data="prev_don_list_1"
-        )
-        next_p = InlineKeyboardButton(
-            text="➡️",
-            callback_data="next_don_list_1"
-        )
-        to_start = InlineKeyboardButton(
-            text="В начало",
-            callback_data="to_start_1"
-        )
-        if len(data['donations']) < 4 and pager[chat_id]['page'] == 1:
-            builder.add()
-        elif len(data['donations']) < 4:
-            builder.add(prev_p, to_start)
-        elif pager[chat_id]['page'] == 1:
-            builder.add(next_p, to_start)
-        else:
-            builder.add(prev_p, to_start, next_p)
-
-        don_message = await generate_message(data)
-        await message.answer(don_message, reply_markup=builder.as_markup(), parse_mode=ParseMode.HTML)
-    else:
-        await message.answer("Похоже произошла ошибка!")
+        keyboard = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="В меню", callback_data="main")],
+        ])
+        await call.message.answer(text="Похоже произошла ошибка!", reply_markup=keyboard)
 
 
 async def generate_message(data: dict):

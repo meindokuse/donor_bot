@@ -5,9 +5,8 @@ from constance import API_URL
 
 class NetWorkWorker:
 
-
     # Функция для отправки модели на сервер
-    async def send_model(self,endpoint:str, model_data: dict):
+    async def send_model(self, endpoint: str, model_data: dict):
         """
         Отправляет модель на сервер по заданному endpoint.
         """
@@ -24,7 +23,7 @@ class NetWorkWorker:
                 return None
 
     # Функция для получения списка моделей
-    async def get_model_list(self,endpoint: str, params: dict = None):
+    async def get_model_list(self, endpoint: str, params: dict = None):
         """
         Получает список моделей с сервера по заданному endpoint.
         """
@@ -43,13 +42,13 @@ class NetWorkWorker:
                 print(f"Ошибка сети при получении списка моделей: {e}")
                 return None
 
-    async def get_model_by_params(self,endpoint: str, params: dict):
+    async def get_model_by_params(self, endpoint: str, params: dict):
         """
         Получает одну модель с сервера по заданному endpoint и id модели.
         """
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=60)) as session:
             try:
-                async with session.get(f"{API_URL}{endpoint}",params=params) as response:
+                async with session.get(f"{API_URL}{endpoint}", params=params) as response:
                     if response.status == 200:
                         return await response.json()  # возвращаем данные модели
                     else:
@@ -58,3 +57,8 @@ class NetWorkWorker:
             except aiohttp.ClientError as e:
                 print(f"Ошибка сети при получении модели: {e}")
                 return None
+
+    async def get_table(self, endpoint: str):
+        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=60)) as session:
+            async with session.get(f"{API_URL}{endpoint}") as response:
+                return response
