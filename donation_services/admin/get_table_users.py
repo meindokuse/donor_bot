@@ -9,6 +9,8 @@ from api.network_worker import NetWorkWorker
 from aiohttp import ClientError
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
+from constance import API_URL
+
 router = Router()
 
 
@@ -20,9 +22,8 @@ async def get_user_table(call: CallbackQuery):
     ])
 
     try:
-
         async with aiohttp.ClientSession() as session:
-            async with session.get('http://192.168.1.66:8000/user/get_table') as response:
+            async with session.get(f'{API_URL}user/get_table') as response:
                 if response.status == 200:
                     # Save the file locally before sending it
                     file_path = 'temp_donations.xlsx'
@@ -35,7 +36,7 @@ async def get_user_table(call: CallbackQuery):
 
                     os.remove(file_path)
                 else:
-                    await call.message.reply("Failed to fetch the file.")
+                    await call.message.answer("Failed to fetch the file.")
 
     except ClientError as e:
         await call.message.answer(f"Сетевая ошибка: {e}", reply_markup=keyboard)

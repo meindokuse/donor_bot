@@ -6,7 +6,6 @@ from aiogram.types import CallbackQuery, Message, InlineKeyboardMarkup
 from aiogram.types import InlineKeyboardButton
 from aiohttp import ClientResponse
 from api.network_worker import NetWorkWorker
-from donation_services.admin.add_donation_service import last_mes_id_don
 
 
 class RegistrationStates(StatesGroup):
@@ -118,16 +117,16 @@ async def get_group(event, state: FSMContext, bot: Bot):
         chat_id = event.chat.id
         if event.text.strip() not in '0123456789':
             last_mes_id = await bot.send_message(chat_id=chat_id, text="Некоректный номер группы", reply_markup=builder)
-            last_mes_id[chat_id] = last_mes_id.message_id
+            last_mes_reg[chat_id] = last_mes_id.message_id
         user_data[chat_id]['group'] = event.text.strip()
         await bot.delete_message(chat_id, event.message_id)
-        await bot.delete_message(chat_id, last_mes_id[chat_id])
+        await bot.delete_message(chat_id, last_mes_reg[chat_id])
     if isinstance(event, CallbackQuery):
         chat_id = event.message.chat.id
-        await bot.delete_message(chat_id, last_mes_id[chat_id])
+        await bot.delete_message(chat_id, last_mes_reg[chat_id])
 
     last_mes = await bot.send_message(chat_id, "Введите резус (+/-):", reply_markup=builder)
-    last_mes_id[chat_id] = last_mes.message_id
+    last_mes_reg[chat_id] = last_mes.message_id
     await state.set_state(RegistrationStates.rezus)
 
 

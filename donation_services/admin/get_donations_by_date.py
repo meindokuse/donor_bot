@@ -1,7 +1,7 @@
 from aiogram import types, Router, F, Bot
 from aiogram.enums import ParseMode
 from aiogram.fsm.state import StatesGroup, State
-from aiogram.types import CallbackQuery, InlineKeyboardButton
+from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.fsm.context import FSMContext
 
 from api.network_worker import NetWorkWorker
@@ -25,7 +25,11 @@ async def get_donations_by_date(query: CallbackQuery, state: FSMContext):
     message = query.message
     pager[message.chat.id] = {'page': 1, 'limit': 4}
 
-    last_mes = await message.answer("Введите дату в формате\n YYYY-MM-DD-YYYY-MM-DD\n(Т.е начало - конец)")
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="В меню", callback_data='main')],
+    ])
+
+    last_mes = await message.answer("Введите дату в формате\n YYYY-MM-DD YYYY-MM-DD\n(Т.е начало - конец)",reply_markup=keyboard)
     await state.set_state(GetDonationDate.get_date)
     await state.update_data(last_mes_id=last_mes.message_id)
 
@@ -71,14 +75,19 @@ async def get_donations_by_date(message: types.Message, state: FSMContext, bot: 
             text="В начало",
             callback_data="to_start"
         )
+        to_menu = InlineKeyboardButton(text="В меню", callback_data="main")
+
         if len(data['donations']) < 4 and pager[chat_id]['page'] == 1:
-            builder.add()
+            builder.add(to_menu)
         elif len(data['donations']) < 4:
-            builder.add(prev_p, to_start)
+            builder.add(prev_p, to_start,to_menu)
+            builder.adjust(2)
         elif pager[chat_id]['page'] == 1:
-            builder.add(to_start, next_p)
+            builder.add(to_start, next_p,to_menu)
+            builder.adjust(2)
         else:
-            builder.add(prev_p, to_start, next_p)
+            builder.add(prev_p, to_start, next_p,to_menu)
+            builder.adjust(3)
 
         don_message = await generate_message(data)
 

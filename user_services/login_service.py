@@ -9,7 +9,6 @@ login_router = Router()
 
 @login_router.callback_query(F.data == 'login')
 async def login_user(call: types.CallbackQuery, bot: Bot):
-    await call.message.delete()
     chat_id = call.message.chat.id
 
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
@@ -38,6 +37,8 @@ async def login_user(call: types.CallbackQuery, bot: Bot):
             formated = f'<blockquote>{user_info}</blockquote>'
 
             await bot.send_message(chat_id, formated, parse_mode=ParseMode.HTML,reply_markup=keyboard)
+            await call.message.delete()
+
     except Exception as e:
         print(e)
         await bot.send_message(call.message.chat.id, "Произошла ошибка", reply_markup=keyboard)

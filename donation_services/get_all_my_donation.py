@@ -14,12 +14,13 @@ get_all_my_donation = Router()
 
 @get_all_my_donation.callback_query(F.data == 'get_all_my_donation')
 async def get_all_my_donation_fun(call: CallbackQuery):
-    await call.message.delete()
     chat_id = call.message.chat.id
 
     pager_user[chat_id] = {'page': 1, 'limit': 4}
 
     await send_paginated_donations(call, chat_id)
+    await call.message.delete()
+
 
 
 @get_all_my_donation.callback_query(F.data == 'prev_don_list_1')
@@ -27,8 +28,9 @@ async def prev_p(query: CallbackQuery):
     chat_id = query.message.chat.id
     pager_user[chat_id]['page'] -= 1
 
-    await query.message.delete()
     await send_paginated_donations(query, chat_id)
+    await query.message.delete()
+
 
 
 @get_all_my_donation.callback_query(F.data == 'next_don_list_1')
@@ -36,8 +38,9 @@ async def next_p(query: CallbackQuery):
     chat_id = query.message.chat.id
     pager_user[chat_id]['page'] += 1
 
-    await query.message.delete()
     await send_paginated_donations(query, chat_id)
+    await query.message.delete()
+
 
 
 @get_all_my_donation.callback_query(F.data == 'to_start_1')
@@ -45,8 +48,9 @@ async def next_p(query: CallbackQuery):
     chat_id = query.message.chat.id
     pager_user[chat_id]['page'] = 1
 
-    await query.message.delete()
     await send_paginated_donations(query, chat_id)
+    await query.message.delete()
+
 
 
 async def send_paginated_donations(call: CallbackQuery, chat_id):

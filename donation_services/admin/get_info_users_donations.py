@@ -20,44 +20,52 @@ prom_mes = {}
 
 @get_info_donation_user_router.callback_query(F.data == "get_users_donation")
 async def get_info_users_donations(call: CallbackQuery, state: FSMContext, bot: Bot):
-    await call.message.delete()
     chat_id = call.message.chat.id
     last_mes = await bot.send_message(chat_id, "Введите имя пользователя")
+    await call.message.delete()
     prom_mes[chat_id] = last_mes.message_id
     await state.set_state(DonationStates.get_name)
 
 
 @get_info_donation_user_router.message(DonationStates.get_name)
 async def get_name(message: types.Message, bot: Bot):
-    await message.delete()
-    chat_id = message.chat.id
-    await bot.delete_message(chat_id=chat_id, message_id=prom_mes[chat_id])
-
-    name = message.text
-    params = {
-        "name": name
-    }
-
-    result = await NetWorkWorker().get_model_by_params("user/check_exist", params)
-
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="В меню", callback_data="main")],
     ])
 
-    if result is not None and result.get('is_exist'):
+    try:
+        chat_id = message.chat.id
+        await bot.delete_message(chat_id=chat_id, message_id=prom_mes[chat_id])
 
-        result_don = await NetWorkWorker().get_model_by_params("donation/admin/get_donations_info_from_user", params)
+        name = message.text
+        params = {
+            "name": name
+        }
 
-        message_text = await generate_message(result_don)
+        result = await NetWorkWorker().get_model_by_params("user/check_exist", params)
 
-        await message.answer(text=message_text, parse_mode=ParseMode.HTML, reply_markup=keyboard)
-    else:
-        await bot.send_message(chat_id, "Пользователя с таким ФИО не существует, попробуйте еще раз",
-                               reply_markup=keyboard)
+        if result is not None and result.get('is_exist'):
+
+            result_don = await NetWorkWorker().get_model_by_params("donation/admin/get_donations_info_from_user",
+                                                                   params)
+
+            message_text = await generate_message(result_don)
+
+            await message.answer(text=message_text, parse_mode=ParseMode.HTML, reply_markup=keyboard)
+            await message.delete()
+        else:
+            await bot.send_message(chat_id, "Пользователя с таким ФИО не существует, попробуйте еще раз",
+                                   reply_markup=keyboard)
+            await message.delete()
+    except Exception as e:
+        await message.answer(f"Произошла ошибка неизвестная ошибка!\n{e}", reply_markup=keyboard)
 
 
 async def format_donation_info(donation_info):
     # Асинхронное форматирование информации о донации
+
+    if donation_info is None:
+        return f"<blockquote>Донаций нету</blockquote>"
     formatted_info = ""
     for t, info in donation_info.items():
         last_donation = info["last_donation"]

@@ -54,7 +54,7 @@ async def main_fun(message: types.Message):
 
     try:
         response = await NetWorkWorker().get_model_by_params('user/login', data)
-        if response:
+        if response and response.get('user') is not None:
             user_info = response.get('user')
             name_user = user_info.get('name')
             role = user_info.get('role_id')

@@ -1,6 +1,7 @@
 from donation_services.admin.add_donation_service import donation_data
-from user_services.admin.registration_service import user_data,last_mes_reg
+from user_services.admin.registration_service import user_data, last_mes_reg
 from donation_services.admin.get_donations_by_date import pager
+from donation_services.admin.add_donation_service import last_mes_id_don
 
 from aiogram import BaseMiddleware
 from aiogram.types import Update
@@ -32,7 +33,7 @@ class CleanUpMiddleware(BaseMiddleware):
             del pager[chat_id]
 
 
-list_dicts = [user_data, donation_data, pager, last_mes_reg]
+list_dicts = [user_data, donation_data, pager, last_mes_reg, last_mes_id_don]
 list_states = []
 
 
@@ -43,4 +44,3 @@ async def clear_all(chat_id):
             del d[chat_id]
         else:
             print('Пусто')
-
