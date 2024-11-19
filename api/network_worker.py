@@ -1,6 +1,6 @@
 import aiohttp
 
-from constance import API_URL
+from config import API_URL
 
 
 class NetWorkWorker:
