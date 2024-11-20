@@ -5,11 +5,10 @@ import aiohttp
 from aiogram import types, Router, F
 from aiogram.types import CallbackQuery
 
-from api.network_worker import NetWorkWorker
 from aiohttp import ClientError
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
-from constance import API_URL
+from config import API_URL
 
 router = Router()
 
