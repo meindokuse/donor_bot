@@ -87,7 +87,7 @@ async def main_fun(message: types.Message):
                 button_info = InlineKeyboardButton(text="ℹ️ Информация о пользователе", callback_data="login")
                 button_donations = InlineKeyboardButton(text="🩸Мой список донаций",
                                                         callback_data="get_all_my_donation")
-                button_achievement = InlineKeyboardButton(text="🏆 Мои достижения", callback_data="get_achievments")
+                button_achievement = InlineKeyboardButton(text="🏆 Статусы", callback_data="info_status")
 
                 builder.add(button_info, button_donations, button_achievement)
                 builder.adjust(1)

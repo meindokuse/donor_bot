@@ -1,4 +1,5 @@
 from donation_services.admin.add_donation_service import donation_data
+from donation_services.get_all_my_donation import pager_user
 from user_services.admin.registration_service import user_data, last_mes_reg
 from donation_services.admin.get_donations_by_date import pager
 from donation_services.admin.add_donation_service import last_mes_id_don
@@ -33,7 +34,7 @@ class CleanUpMiddleware(BaseMiddleware):
             del pager[chat_id]
 
 
-list_dicts = [user_data, donation_data, pager, last_mes_reg, last_mes_id_don]
+list_dicts = [user_data, donation_data, pager, last_mes_reg, last_mes_id_don, pager_user]
 list_states = []
 
 
