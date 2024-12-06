@@ -25,13 +25,25 @@ async def login_user(call: types.CallbackQuery, bot: Bot):
             user: dict = json.get("user")
             role = "Админ" if user.get("role_id") == 1 else "Донор"
 
+            status = ""
+            if user['status'] >= 8:
+                status = "Почетный донор университета"
+            if user['status'] >= 20:
+                status = "Почетный донор Москвы"
+            if user['status'] >= 40:
+                status = "Почетный донор России"
+            else:
+                status = "Начинающий донор"
+
+
             user_info = (
                 f"Информация о вас:\n"
                 f"Имя: {user.get("name")}\n"
                 f"Группа крови: {user.get("group")}\n"
                 f"Резус-фактор: {'+' if user.get("rezus") == 1 else '-'}\n"
-                f"Kell: {user.get("kell")}\n"
-                f"Роль: {role}"
+                f"Kell: {'+' if user.get("kell") == 1 else '-'}\n"
+                f"Роль: {role}\n"
+                f"Статус: {status}\n"
             )
 
             formated = f'<blockquote>{user_info}</blockquote>'

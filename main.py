@@ -16,6 +16,7 @@ from donation_services.admin.get_info_users_donations import get_info_donation_u
 from donation_services.admin.get_donations_by_date import get_all_donations
 from donation_services.get_all_my_donation import get_all_my_donation
 from donation_services.admin.get_table_users import router as get_table_users_router
+from user_services.info_status import get_status
 
 API_TOKEN = '7530930015:AAFJqvJUpaFUK93qZ73z-k01Y0KBtVIejyQ'
 
@@ -29,6 +30,7 @@ dp.include_router(login_router)
 dp.include_router(get_all_donations)
 dp.include_router(get_all_my_donation)
 dp.include_router(get_table_users_router)
+dp.include_router(get_status)
 
 
 @dp.message(CommandStart())
@@ -87,11 +89,13 @@ async def main_fun(message: types.Message):
                 button_info = InlineKeyboardButton(text="ℹ️ Информация о пользователе", callback_data="login")
                 button_donations = InlineKeyboardButton(text="🩸Мой список донаций",
                                                         callback_data="get_all_my_donation")
-                button_achievement = InlineKeyboardButton(text="🏆 Мои достижения", callback_data="get_achievments")
+                button_achievement = InlineKeyboardButton(text="🏆 Статусы", callback_data="get_info_status")
 
                 builder.add(button_info, button_donations, button_achievement)
                 builder.adjust(1)
-                await message.answer(f"Добро пожаловать, {name}!", reply_markup=builder.as_markup())
+                user_info = response.get('user')
+                name_user = user_info.get('name')
+                await message.answer(f"Добро пожаловать, {name_user}!", reply_markup=builder.as_markup())
 
         else:
             await message.answer(

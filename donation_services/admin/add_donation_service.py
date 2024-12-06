@@ -7,7 +7,6 @@ from api.network_worker import NetWorkWorker
 from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder, InlineKeyboardMarkup
 
 
-
 class DonationStates(StatesGroup):
     type = State()
     owner = State()
@@ -136,6 +135,8 @@ async def get_group(event, state: FSMContext, bot: Bot):
         donation_data[chat_id]['org'] = event.text
 
     builder = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="+", callback_data="+_is_free")],
+        [InlineKeyboardButton(text="-", callback_data="-_if_free")],
         [InlineKeyboardButton(text="Назад", callback_data="don_state_owner")],
     ])
 
@@ -145,29 +146,15 @@ async def get_group(event, state: FSMContext, bot: Bot):
         reply_markup=builder
     )
     last_mes_id_don[chat_id] = last_mes.message_id
-    await state.set_state(DonationStates.is_free)
 
 
-@add_donation_router.message(DonationStates.is_free)
-async def get_is_free(event, bot: Bot):
-    global chat_id
-    global is_free
+@add_donation_router.callback_query(F.data.in_(["+_is_free", "-_if_free"]))
+async def get_is_free(event: CallbackQuery, bot: Bot):
 
-    if isinstance(event, CallbackQuery):
-        chat_id = event.message.chat.id
-        await bot.delete_message(chat_id, last_mes_id_don[chat_id])
-        is_free = event.message.text
+    chat_id = event.message.chat.id
+    await bot.delete_message(chat_id, last_mes_id_don[chat_id])
+    is_free = event.data[0]
 
-    elif isinstance(event, Message):
-        chat_id = event.chat.id
-        await bot.delete_message(chat_id, event.message_id)
-        await bot.delete_message(chat_id, last_mes_id_don[chat_id])
-        is_free = event.text
-
-    if is_free not in "+-":
-        last_mes = await bot.send_message(chat_id, "Нужно ввести + или -")
-        last_mes_id_don[chat_id] = last_mes.message_id
-        return
     donation_data[chat_id]['is_free'] = True if is_free == "+" else False
 
     builder = InlineKeyboardBuilder()
@@ -178,13 +165,11 @@ async def get_is_free(event, bot: Bot):
 
     builder.add(button1, button2, button3)
 
-    print(donation_data[chat_id])
-
-    # добавить код для сохранения данных в базе данных
     last_mes_id = await bot.send_message(chat_id, (
         f"Данные о донации:\nТип:{donation_data[chat_id]["type"]}\nВладелец: {donation_data[chat_id]['owner']}\n"
         f"Организация: {donation_data[chat_id]['org']}\nБезвозмездная: {is_free}"
     ), reply_markup=builder.as_markup())
+
     last_mes_id_don[chat_id] = last_mes_id.message_id
 
 
@@ -218,3 +203,5 @@ async def send_model(call: CallbackQuery, bot: Bot):
         builder.add(button1, button2, button3)
         await bot.send_message(chat_id, "Похоже что то пошло не так, попробуйте позже",
                                reply_markup=builder.as_markup())
+
+    del last_mes_id_don[chat_id]
