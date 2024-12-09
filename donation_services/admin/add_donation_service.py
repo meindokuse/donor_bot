@@ -47,7 +47,8 @@ async def get_name(event, state: FSMContext, bot: Bot):
     if isinstance(event, CallbackQuery):
         chat_id = event.message.chat.id
         await bot.delete_message(chat_id, last_mes_id_don[chat_id])
-        donation_data[chat_id]["type"] = event.data
+        if event.data != "don_state_type":
+            donation_data[chat_id]["type"] = event.data
 
     elif isinstance(event, Message):
         chat_id = event.chat.id
@@ -102,18 +103,22 @@ async def get_owner(event, state: FSMContext, bot: Bot):
 
         result = await NetWorkWorker().get_model_by_params("user/check_exist", params)
         if result and result.get('is_exist'):
-            print(result.get('is_exist'))
+            builder = InlineKeyboardMarkup(inline_keyboard=[
+                [InlineKeyboardButton(text="Назад", callback_data="don_state_type")],
+            ])
             donation_data[chat_id]['owner'] = owner
             last_mes = await bot.send_message(
                 chat_id=chat_id,
-                text="Введите организацию принимающую донации:",
+                text="Введите организацию принимающую донации.",
                 reply_markup=builder
             )
             last_mes_id_don[chat_id] = last_mes.message_id
             await state.set_state(DonationStates.org)
 
         else:
-            last_mes = await bot.send_message(chat_id, "Пользователя с таким ФИО не существует, попробуйте еще раз")
+            last_mes = await bot.send_message(chat_id=chat_id,
+                                              text="Пользователя с таким ФИО не существует, попробуйте еще раз!",
+                                              reply_markup=builder)
             last_mes_id_don[chat_id] = last_mes.message_id
             await state.set_state(DonationStates.owner)
 
@@ -150,7 +155,6 @@ async def get_group(event, state: FSMContext, bot: Bot):
 
 @add_donation_router.callback_query(F.data.in_(["+_is_free", "-_if_free"]))
 async def get_is_free(event: CallbackQuery, bot: Bot):
-
     chat_id = event.message.chat.id
     await bot.delete_message(chat_id, last_mes_id_don[chat_id])
     is_free = event.data[0]

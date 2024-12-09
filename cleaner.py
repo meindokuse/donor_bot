@@ -41,7 +41,5 @@ list_states = []
 async def clear_all(chat_id):
     for d in list_dicts:
         if chat_id in d:
-            print(d[chat_id])
             del d[chat_id]
-        else:
-            print('Пусто')
+

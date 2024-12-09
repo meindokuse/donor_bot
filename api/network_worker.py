@@ -16,10 +16,8 @@ class NetWorkWorker:
                     if response.status == 200 or response.status == 401:
                         return response
                     else:
-                        print(f"Ошибка при отправке модели: {response.status} - {response.reason}")
                         return None
             except aiohttp.ClientError as e:
-                print(f"Ошибка сети при отправке модели: {e}")
                 return None
 
     # Функция для получения списка моделей
@@ -31,15 +29,10 @@ class NetWorkWorker:
             try:
                 async with session.get(f"{API_URL}{endpoint}", params=params) as response:
                     if response.status == 200:
-                        print(await response.json())
                         return await response.json()
-
                     else:
-                        print(f"Ошибка при получении списка моделей: {response.status} - {response.reason}")
-                        print(await response.json())
                         return None
             except aiohttp.ClientError as e:
-                print(f"Ошибка сети при получении списка моделей: {e}")
                 return None
 
     async def get_model_by_params(self, endpoint: str, params: dict):
@@ -52,10 +45,8 @@ class NetWorkWorker:
                     if response.status == 200:
                         return await response.json()  # возвращаем данные модели
                     else:
-                        print(f"Ошибка при получении модели: {response.status} - {response.reason}")
                         return None
             except aiohttp.ClientError as e:
-                print(f"Ошибка сети при получении модели: {e}")
                 return None
 
     async def get_table(self, endpoint: str):

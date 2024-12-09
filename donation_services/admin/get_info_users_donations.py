@@ -24,7 +24,7 @@ async def get_info_users_donations(call: CallbackQuery, state: FSMContext, bot: 
         [InlineKeyboardButton(text="В меню", callback_data="main")],
     ])
     chat_id = call.message.chat.id
-    last_mes = await bot.send_message(chat_id, "Введите имя пользователя", reply_markup=keyboard)
+    last_mes = await bot.send_message(chat_id, "Введите ФИО пользователя", reply_markup=keyboard)
     await call.message.delete()
     prom_mes[chat_id] = last_mes.message_id
     await state.set_state(DonationStates.get_name)
