@@ -98,7 +98,7 @@ async def get_telegram_id(event, state: FSMContext, bot: Bot):
         [InlineKeyboardButton(text="Назад", callback_data="reg_state_name")],
     ])
 
-    last_mes = await bot.send_message(chat_id=chat_id, text="Введите номер группы:\n Только число!!!",
+    last_mes = await bot.send_message(chat_id=chat_id, text="Введите номер группы (1-4)",
                                       reply_markup=builder)
     last_mes_reg[chat_id] = last_mes.message_id
     await state.set_state(RegistrationStates.group)
@@ -110,63 +110,58 @@ async def get_group(event, state: FSMContext, bot: Bot):
     global chat_id
 
     builder = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="+", callback_data="+_rezus")],
+        [InlineKeyboardButton(text="-", callback_data="-_rezus")],
         [InlineKeyboardButton(text="Назад", callback_data="reg_state_telegram_id")],
     ])
 
-    if isinstance(event, Message):
-        chat_id = event.chat.id
-        if event.text.strip() not in '0123456789':
-            last_mes_id = await bot.send_message(chat_id=chat_id, text="Некоректный номер группы", reply_markup=builder)
-            last_mes_reg[chat_id] = last_mes_id.message_id
+    chat_id = event.chat.id
+    if event.text.strip() not in '1234':
+        builder = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="Назад", callback_data="reg_state_telegram_id")],
+        ])
+        await bot.delete_message(chat_id, last_mes_reg[chat_id])
+        await bot.delete_message(chat_id, event.message_id)
+        last_mes_id = await bot.send_message(chat_id=chat_id, text="Некоректный номер группы, повторите попытку",
+                                             reply_markup=builder)
+        last_mes_reg[chat_id] = last_mes_id.message_id
+    else:
         user_data[chat_id]['group'] = event.text.strip()
         await bot.delete_message(chat_id, event.message_id)
         await bot.delete_message(chat_id, last_mes_reg[chat_id])
-    if isinstance(event, CallbackQuery):
-        chat_id = event.message.chat.id
-        await bot.delete_message(chat_id, last_mes_reg[chat_id])
 
-    last_mes = await bot.send_message(chat_id, "Введите резус (+/-):", reply_markup=builder)
-    last_mes_reg[chat_id] = last_mes.message_id
-    await state.set_state(RegistrationStates.rezus)
+        last_mes = await bot.send_message(chat_id, "Введите резус (+/-):", reply_markup=builder)
+        last_mes_reg[chat_id] = last_mes.message_id
+        await state.set_state(RegistrationStates.rezus)
 
 
-@reg_user_router.callback_query(F.data == 'reg_state_rezus')
+@reg_user_router.callback_query(F.data.in_(["+_rezus", "-_rezus"]))
 @reg_user_router.message(RegistrationStates.rezus)
-async def get_rezus(event, state: FSMContext, bot: Bot):
-    global chat_id
-
-    if isinstance(event, Message):
-        chat_id = event.chat.id
-        user_data[chat_id]['rezus'] = event.text
-        await bot.delete_message(chat_id, event.message_id)
-        await bot.delete_message(chat_id, last_mes_reg[chat_id])
-    if isinstance(event, CallbackQuery):
-        chat_id = event.message.chat.id
-        user_data[chat_id]['rezus'] = event.message.text
-        await bot.delete_message(chat_id, last_mes_reg[chat_id])
-
+async def get_rezus(event: CallbackQuery, state: FSMContext, bot: Bot):
     builder = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="+", callback_data="+_kell")],
+        [InlineKeyboardButton(text="-", callback_data="-_kell")],
         [InlineKeyboardButton(text="Назад", callback_data="reg_state_group")],
     ])
+    global chat_id
+
+    chat_id = event.message.chat.id
+    user_data[chat_id]['rezus'] = event.data[0]
+    await bot.delete_message(chat_id, last_mes_reg[chat_id])
+
     last_mes = await bot.send_message(chat_id, "Введите келл (+/-):", reply_markup=builder)
     last_mes_reg[chat_id] = last_mes.message_id
     await state.set_state(RegistrationStates.kell)
 
 
-@reg_user_router.callback_query(F.data == 'reg_state_kell')
+@reg_user_router.callback_query(F.data.in_(["+_kell", "-_kell"]))
 @reg_user_router.message(RegistrationStates.kell)
-async def get_kell(event, bot: Bot):
+async def get_kell(event: CallbackQuery, bot: Bot):
     global chat_id
 
-    if isinstance(event, Message):
-        chat_id = event.chat.id
-        user_data[chat_id]['kell'] = event.text
-        await bot.delete_message(chat_id, event.message_id)
-        await bot.delete_message(chat_id, last_mes_reg[chat_id])
-    if isinstance(event, CallbackQuery):
-        chat_id = event.chat.id
-        user_data[chat_id]['kell'] = event.message.text
-        await bot.delete_message(chat_id, last_mes_reg[chat_id])
+    chat_id = event.message.chat.id
+    user_data[chat_id]['kell'] = event.data[0]
+    await bot.delete_message(chat_id, last_mes_reg[chat_id])
 
     builder = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="Готово", callback_data="send_reg_request_to_server")],

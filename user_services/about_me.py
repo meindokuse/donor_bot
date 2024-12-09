@@ -20,7 +20,7 @@ async def router_about_me_handler(call: CallbackQuery):
     ])
 
     user = await NetWorkWorker().get_model_by_params('/login', params)
-    status = " "
+    status = ""
     if user['status'] >= 8:
         status = "Почетный донор университета"
     if user['status'] >= 20:
