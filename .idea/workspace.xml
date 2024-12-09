@@ -5,11 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="17b12830-4fb1-4e29-900c-6584d3ccebd9" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/user_services/about_me.py" beforeDir="false" afterPath="$PROJECT_DIR$/user_services/about_me.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/user_services/admin/registration_service.py" beforeDir="false" afterPath="$PROJECT_DIR$/user_services/admin/registration_service.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/user_services/info_status.py" beforeDir="false" afterPath="$PROJECT_DIR$/user_services/info_status.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/user_services/login_service.py" beforeDir="false" afterPath="$PROJECT_DIR$/user_services/login_service.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/user_services/about_me.py" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -52,7 +49,7 @@
     "Python.main.executor": "Run",
     "Python.registration_service.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "Merging master",
+    "git-widget-placeholder": "master",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",

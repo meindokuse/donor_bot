@@ -100,6 +100,7 @@ async def generate_message(data: dict):
         f"Группа крови: {user.get("group")}\n"
         f"Резус-фактор: {rezus}\n"
         f"Kell: {kell}\n\n"
+        f"Статус: {user.get('status')}\n\n"
     )
 
     donation_details = await format_donation_info(donation_info)
